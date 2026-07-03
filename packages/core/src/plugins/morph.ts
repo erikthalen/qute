@@ -18,25 +18,31 @@ async function load(): Promise<IdiomorphModule | null> {
     if (!cached) cached = await import('idiomorph')
     return cached
   } catch {
-    console.warn('[ajax] morph plugin requires "idiomorph" — install it as a dependency or remove the morph plugin.')
+    console.warn(
+      '[ajax] morph plugin requires "idiomorph" — install it as a dependency or remove the morph plugin.',
+    )
     return null
   }
 }
 
 export const morph: Plugin = {
   async swap(ctx, next) {
-    const mod = await load()
-    if (!mod) return next()
+    const IdiomorphModule = await load()
+    if (!IdiomorphModule) return next()
 
-    const { Idiomorph } = mod
+    const { Idiomorph } = IdiomorphModule
 
     ctx.replace = (current, incoming, mode) => {
       if (mode !== 'innerHTML' && mode !== 'outerHTML') {
         return defaultReplace(current, incoming, mode)
       }
-      Idiomorph.morph(current, mode === 'innerHTML' ? incoming.innerHTML : incoming.outerHTML, {
-        morphStyle: mode,
-      })
+      Idiomorph.morph(
+        current,
+        mode === 'innerHTML' ? incoming.innerHTML : incoming.outerHTML,
+        {
+          morphStyle: mode,
+        },
+      )
       return current
     }
 

@@ -46,7 +46,7 @@ type AjaxContext = {
   headers: Record<string, string>
   config: AjaxConfig
   response?: Response
-  nextDocument?: Document
+  incomingDocument?: Document
   swappedElements: Element[]
 }
 ```

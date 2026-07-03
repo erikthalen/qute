@@ -11,19 +11,19 @@ These are always active:
 
 | Plugin                      | Purpose                                             |
 | --------------------------- | --------------------------------------------------- |
-| [headers](./plugin-headers) | Adds `X-Ajax-Request: true` to every fetch          |
-| [scripts](./plugin-scripts) | Re-executes `<script>` tags inside swapped elements |
-| [events](./plugin-events)   | Dispatches `ajax:*` CustomEvents on `document`      |
+| [headers](/plugins/headers) | Adds `X-Ajax-Request: true` to every fetch          |
+| [scripts](/plugins/scripts) | Re-executes `<script>` tags inside swapped elements |
+| [events](/plugins/events)   | Dispatches `ajax:*` CustomEvents on `document`      |
 
 ## Optional
 
 Import from `@erikt/ajax` and register with `ajax.use()` or per-registration:
 
-| Plugin                      | Purpose                                                |
-| --------------------------- | ------------------------------------------------------ |
-| [loading](./plugin-loading) | Sets `aria-busy="true"` on an element during a request |
-| [history](./plugin-history) | Calls `pushState` or `replaceState` after a swap       |
-| [debug](./plugin-debug)     | Logs colored, grouped output for every lifecycle stage |
-| [morph](./plugin-morph)     | Replaces the default swap with Idiomorph diffing       |
-| [preload](./plugin-preload) | Preloads links as they scroll into view                |
-| [head](./plugin-head)       | Updates `<head>` metadata after a swap                 |
+| Plugin                    | Purpose                                                |
+| ------------------------- | ------------------------------------------------------ |
+| [loading](/plugins/loading) | Sets `aria-busy="true"` on an element during a request |
+| [history](/plugins/history) | Calls `pushState` or `replaceState` after a swap       |
+| [debug](/plugins/debug)     | Logs colored, grouped output for every lifecycle stage |
+| [morph](/plugins/morph)     | Replaces the default swap with Idiomorph diffing       |
+| [preload](/plugins/preload) | Preloads links as they scroll into view                |
+| [head](/plugins/head)       | Updates `<head>` metadata after a swap                 |

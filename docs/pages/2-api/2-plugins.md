@@ -64,7 +64,7 @@ type AjaxContext = {
 
   // populated after the fetch completes (available inside swap hooks):
   response?: Response
-  nextDocument?: Document
+  incomingDocument?: Document
 
   // populated after the swap runs:
   swappedElements: Element[]
@@ -76,7 +76,7 @@ The typical read/write pattern by hook:
 | Hook | Typical reads | Typical writes |
 |---|---|---|
 | `request` | `url`, `method`, `body` | `headers`, `body` |
-| `swap` | `nextDocument`, `swappedElements` | `nextDocument` (to modify before swap) |
+| `swap` | `incomingDocument`, `swappedElements` | `incomingDocument` (to modify before swap) |
 | `error` | `url`, `config` | — |
 
 ## Writing a plugin
