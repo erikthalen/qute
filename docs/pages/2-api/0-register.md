@@ -172,6 +172,24 @@ include the same element:
 
 ---
 
+### `match`
+
+```ts
+match?: string
+```
+
+When `replace` matches multiple elements, `match` names an attribute used to
+pair each current element with its counterpart in the fetched page, instead of
+applying the first found element to all of them. Elements are paired when
+`current.getAttribute(match) === next.getAttribute(match)`. A current element
+with no matching counterpart is left untouched.
+
+```js
+{ replace: "#list li", match: "id" }
+```
+
+---
+
 ### `mode`
 
 ```ts

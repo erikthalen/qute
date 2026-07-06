@@ -1,30 +1,5 @@
 # Changelog
 
-## 0.0.3
-
-### New features
-
-- **`transition` on swap configs** — each entry in `swaps` now accepts a `transition` option (`string` or `(ctx) => string`) that contributes a transition type scoped to that specific swap. If the swap's `if()` callback returns `false` (meaning no DOM change occurs), the transition is excluded from the `startViewTransition` call entirely:
-
-```js
-ajax.register({
-  target: '#cart-page form',
-  swaps: [
-    {
-      replace: '#cart-list',
-      transition: 'update-list',
-      if: (current, next) => current.children.length !== next.children.length,
-    },
-    {
-      replace: '#cart-button',
-      transition: 'update-count',
-    },
-  ],
-})
-```
-
----
-
 ## 0.0.2
 
 ### Breaking changes
@@ -62,6 +37,34 @@ ajax.register({
     ...
   })
   ```
+
+- **`transition` on swap configs** — each entry in `swaps` now accepts a `transition` option (`string` or `(ctx) => string`) that contributes a transition type scoped to that specific swap. If the swap's `if()` callback returns `false` (meaning no DOM change occurs), the transition is excluded from the `startViewTransition` call entirely:
+
+```js
+ajax.register({
+  target: '#cart-page form',
+  swaps: [
+    {
+      replace: '#cart-list',
+      transition: 'update-list',
+      if: (current, next) => current.children.length !== next.children.length,
+    },
+    {
+      replace: '#cart-button',
+      transition: 'update-count',
+    },
+  ],
+})
+```
+
+- **`match` on swap configs** — when a `replace` selector matches multiple elements, `match` names an attribute used to pair each current element with the correct counterpart in the fetched page (instead of every matched element receiving the same one):
+
+```js
+ajax.register({
+  target: '#todo-list',
+  swaps: [{ replace: '#todo-list li', match: 'id' }],
+})
+```
 
 ### Bug fixes
 

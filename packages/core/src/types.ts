@@ -13,6 +13,9 @@ export type TargetConfig = {
   replace: string
   /** CSS selector(s) to pull content from in the fetched document. Falls back to `replace` if omitted */
   with?: string | string[]
+  /** Attribute name used to pair each `replace` element with its counterpart
+   *  in the incoming document, when `replace` matches multiple elements */
+  match?: string
   /** Predicate to skip a swap for a specific element pair */
   if?: (current: Element, next: Element) => boolean
   /** How content is inserted. Defaults to `"innerHTML"` */

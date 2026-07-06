@@ -23,12 +23,12 @@ ajax.register({
   swaps: [{ replace: '#main' }],
 })
 
-ajax.register({
-  target: '#cart-button',
-  transitions: ['slide-left'],
-  plugins: [history('push')],
-  swaps: [{ replace: '#main' }],
-})
+// ajax.register({
+//   target: '#cart-button',
+//   transitions: ['slide-left'],
+//   plugins: [history('push')],
+//   swaps: [{ replace: '#main' }],
+// })
 
 ajax.register({
   target: '#cart-page form',
@@ -50,13 +50,42 @@ ajax.register({
 })
 
 ajax.register({
+  target: '#cart-drawer form',
+  trigger: ['change', 'submit'],
+  plugins: [preloader.invalidate()],
+  swaps: [
+    {
+      replace: '#cart-page ul',
+      with: ['#cart-page ul', '#cart-page .empty'],
+      mode: 'outerHTML',
+      transition: 'update-cart-page',
+    },
+    {
+      replace: '#cart-drawer',
+    },
+    {
+      replace: '#cart-button',
+      mode: 'outerHTML',
+      transition: 'update-cart-count',
+    },
+  ],
+})
+
+ajax.register({
   target: '#product form',
   transitions: ['update-cart-count'],
   plugins: [
     loading((ctx) => ctx.element.querySelector('[type="submit"]')),
     preloader.invalidate('/cart'),
   ],
-  swaps: [{ replace: '#cart-button' }],
+  swaps: [
+    {
+      replace: '#cart-button',
+    },
+    {
+      replace: '#cart-drawer',
+    },
+  ],
 })
 
 ajax.register({

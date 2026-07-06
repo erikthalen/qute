@@ -1,6 +1,15 @@
 import { observe } from './utils/observer.js'
 import * as plugin from './plugins/index.js'
-import type { AjaxConfig, AjaxContext, Hook, MethodType, Plugin, Replacer, SwapStrategy } from './types.js'
+import type {
+  AjaxConfig,
+  AjaxContext,
+  Hook,
+  MethodType,
+  Plugin,
+  Replacer,
+  SwapStrategy,
+  TargetConfig,
+} from './types.js'
 
 const store = new Map<string, Set<AjaxConfig>>()
 const registered = new WeakSet<HTMLElement>()
@@ -15,14 +24,14 @@ export function use(plugin: Plugin): void {
 }
 
 export function register(config: AjaxConfig): void {
-  const regs = store.get(config.target)
+  const registrations = store.get(config.target)
 
-  if (regs?.has(config)) return
+  if (registrations?.has(config)) return
 
-  if (!regs) {
+  if (!registrations) {
     store.set(config.target, new Set([config]))
   } else {
-    store.set(config.target, regs.add(config))
+    store.set(config.target, registrations.add(config))
   }
 
   for (const element of document.querySelectorAll<HTMLElement>(config.target)) {
@@ -164,12 +173,35 @@ function createContext(
   return { ...defaults, url, method: 'GET' }
 }
 
+function resolveIncomingElements(
+  incomingDocument: Document,
+  swapConfig: TargetConfig,
+): Element[] {
+  for (const selector of [swapConfig.with ?? swapConfig.replace].flat()) {
+    const found = Array.from(incomingDocument.querySelectorAll(selector))
+    if (found.length) return found
+  }
+  return []
+}
+
+function matchIncoming(
+  current: Element,
+  incomingElements: Element[],
+  match?: string,
+): Element | undefined {
+  if (!match) return incomingElements[0]
+  const value = current.getAttribute(match)
+  if (value === null) return undefined
+  return incomingElements.find((el) => el.getAttribute(match) === value)
+}
+
 function resolveTransitions(context: AjaxContext): string[] {
   const { config, incomingDocument } = context
 
-  const base = typeof config.transitions === 'function'
-    ? config.transitions(context)
-    : (config.transitions ?? [])
+  const base =
+    typeof config.transitions === 'function'
+      ? config.transitions(context)
+      : (config.transitions ?? [])
 
   if (!incomingDocument) return base
 
@@ -178,24 +210,27 @@ function resolveTransitions(context: AjaxContext): string[] {
   for (const swapConfig of config.swaps) {
     if (!swapConfig.transition) continue
 
-    const currentElements = Array.from(document.querySelectorAll(swapConfig.replace))
+    const currentElements = Array.from(
+      document.querySelectorAll(swapConfig.replace),
+    )
     if (!currentElements.length) continue
 
-    let incomingElement: Element | undefined
-    for (const selector of [swapConfig.with ?? swapConfig.replace].flat()) {
-      const found = incomingDocument.querySelector(selector)
-      if (found) { incomingElement = found; break }
-    }
+    const incomingElements = resolveIncomingElements(
+      incomingDocument,
+      swapConfig,
+    )
+    if (!incomingElements.length) continue
 
-    if (!incomingElement) continue
-
-    const incoming = incomingElement
-    const willSwap = currentElements.some(el => swapConfig.if?.(el, incoming) !== false)
+    const willSwap = currentElements.some((el) => {
+      const incoming = matchIncoming(el, incomingElements, swapConfig.match)
+      return incoming !== undefined && swapConfig.if?.(el, incoming) !== false
+    })
     if (!willSwap) continue
 
-    const t = typeof swapConfig.transition === 'function'
-      ? swapConfig.transition(context)
-      : swapConfig.transition
+    const t =
+      typeof swapConfig.transition === 'function'
+        ? swapConfig.transition(context)
+        : swapConfig.transition
 
     if (t) perSwap.push(t)
   }
@@ -225,18 +260,19 @@ function swap(context: AjaxContext): void {
     const mode: SwapStrategy = swapConfig.mode ?? 'innerHTML'
     const currentElements = document.querySelectorAll(swapConfig.replace)
 
-    let incomingElement: Element | undefined
-    for (const selector of [swapConfig.with ?? swapConfig.replace].flat()) {
-      const found = incomingDocument.querySelector(selector)
-      if (found) {
-        incomingElement = found
-        break
-      }
-    }
-
-    if (!incomingElement) return
+    const incomingElements = resolveIncomingElements(
+      incomingDocument,
+      swapConfig,
+    )
+    if (!incomingElements.length) return
 
     for (const currentElement of currentElements) {
+      const incomingElement = matchIncoming(
+        currentElement,
+        incomingElements,
+        swapConfig.match,
+      )
+      if (!incomingElement) continue
       if (swapConfig.if?.(currentElement, incomingElement) === false) continue
       const swapped = context.replace(currentElement, incomingElement, mode)
       if (swapped) context.swappedElements.push(swapped)

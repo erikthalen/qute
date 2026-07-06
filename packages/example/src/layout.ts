@@ -3,11 +3,13 @@ import type { HtmlEscapedString } from 'hono/utils/html'
 import { loginButton } from './components/login-button.ts'
 import { userButton } from './components/user-button.ts'
 import { cartButton } from './components/cart-button.ts'
+import { type Cart } from './server.ts'
+import { cartDrawer } from './components/cart-drawer.ts'
 
 export function layout(
   content: HtmlEscapedString | Promise<HtmlEscapedString>,
   user?: string,
-  cartCount: number = 0,
+  cart: Cart = {},
   title: string = '',
 ): HtmlEscapedString | Promise<HtmlEscapedString> {
   return html`<!DOCTYPE html>
@@ -66,7 +68,13 @@ export function layout(
           </nav>
 
           <span>
-            ${user ? userButton(user) : loginButton()} ${cartButton(cartCount)}
+            ${user ? userButton(user) : loginButton()}
+
+            <!--  -->
+
+            ${cartDrawer(cart)}
+
+            <!-- {cartButton(cartCount)} -->
           </span>
         </header>
 

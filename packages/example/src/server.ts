@@ -13,10 +13,10 @@ import { loginPage } from './pages/login.ts'
 import { cartPage } from './pages/cart.ts'
 import { profilePage } from './pages/profile.ts'
 
-const THROTTLE_DELAY = Number(process.env.THROTTLE_DELAY ?? 1000)
+const THROTTLE_DELAY = Number(process.env.THROTTLE_DELAY ?? 0)
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-type Cart = Record<string, number>
+export type Cart = Record<string, number>
 
 function getCart(c: Context): Cart {
   const cookie = getCookie(c, 'cart')
@@ -58,7 +58,7 @@ app.get('/', async (c) => {
     layout(
       homePage(),
       getCookie(c, 'user'),
-      cartTotal(getCart(c)),
+      getCart(c),
       'Swip swop, fragment swap',
     ),
   )
@@ -66,12 +66,7 @@ app.get('/', async (c) => {
 app.get('/about', async (c) => {
   await sleep(THROTTLE_DELAY)
   return c.html(
-    layout(
-      aboutPage(),
-      getCookie(c, 'user'),
-      cartTotal(getCart(c)),
-      'About page',
-    ),
+    layout(aboutPage(), getCookie(c, 'user'), getCart(c), 'About page'),
   )
 })
 app.get('/store', async (c) => {
@@ -82,20 +77,13 @@ app.get('/store', async (c) => {
     | 'large'
     | undefined
   return c.html(
-    layout(
-      storePage(variant),
-      getCookie(c, 'user'),
-      cartTotal(getCart(c)),
-      'Shop now!',
-    ),
+    layout(storePage(variant), getCookie(c, 'user'), getCart(c), 'Shop now!'),
   )
 })
 
 app.get('/login', async (c) => {
   await sleep(THROTTLE_DELAY)
-  return c.html(
-    layout(loginPage(), getCookie(c, 'user'), cartTotal(getCart(c))),
-  )
+  return c.html(layout(loginPage(), getCookie(c, 'user'), getCart(c)))
 })
 
 app.get('/profile', async (c) => {
@@ -106,14 +94,12 @@ app.get('/profile', async (c) => {
     return c.redirect('/login')
   }
 
-  return c.html(
-    layout(profilePage(user), getCookie(c, 'user'), cartTotal(getCart(c))),
-  )
+  return c.html(layout(profilePage(user), getCookie(c, 'user'), getCart(c)))
 })
 app.get('/cart', async (c) => {
   await sleep(THROTTLE_DELAY)
   const cart = getCart(c)
-  return c.html(layout(cartPage(cart), getCookie(c, 'user'), cartTotal(cart)))
+  return c.html(layout(cartPage(cart), getCookie(c, 'user'), cart))
 })
 
 app.get('/logout', (c) => {
