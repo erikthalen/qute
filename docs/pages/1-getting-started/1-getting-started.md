@@ -1,3 +1,7 @@
+---
+label: Getting started
+---
+
 # Quick start
 
 This guide walks through building a page that swaps content without full

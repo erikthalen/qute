@@ -1,20 +1,32 @@
-import type { AjaxConfig, Plugin } from '../types.js'
+import type { Plugin } from '../types.js'
 
 export type PreloadStrategy = 'prefetch' | 'prerender' | 'fetch'
 
 export type IgnoreRule = string | RegExp | ((url: string) => boolean)
 
+export type PreloadEagerness =
+  | 'immediate'
+  | 'eager'
+  | 'moderate'
+  | 'conservative'
+
 export interface PreloadOptions {
   /** How to load the URL. Pass an array to apply multiple strategies. Default: 'prefetch' */
   strategy?: PreloadStrategy | PreloadStrategy[]
-  /** IntersectionObserver threshold. Default: 0 (any pixel visible) */
-  threshold?: number
+
   /** Skip preloading on slow connections and when Save-Data is on. Default: true */
   respectConnection?: boolean
-  /** Only preload links that push/replace history (i.e. actual page navigations). Default: true */
-  onlyNavigations?: boolean
   /** URLs to never preload. Strings are matched against the pathname. */
   ignore?: IgnoreRule | IgnoreRule[]
+  /**
+   * Speculation Rules API eagerness. Controls when the browser speculatively loads a URL.
+   * Only applies to the `prerender` strategy (Speculation Rules API).
+   * When set, the browser manages timing — the IntersectionObserver is bypassed for prerender.
+   * - `"immediate"` / `"eager"`: speculate as soon as the rule is added
+   * - `"moderate"`: speculate on hover for 200ms
+   * - `"conservative"`: speculate on pointer down or touch start
+   */
+  eagerness?: PreloadEagerness
 }
 
 export type PreloadPlugin = Plugin & { invalidate: (url?: string) => Plugin }
@@ -69,13 +81,13 @@ function isIgnored(url: string, rules: IgnoreRule[]): boolean {
 export function preload(options: PreloadOptions = {}): PreloadPlugin {
   const {
     strategy = 'prefetch',
-    threshold = 0,
     respectConnection = true,
     ignore = [],
+    eagerness,
   } = options
 
-  const ignoreRules = Array.isArray(ignore) ? ignore : [ignore]
-  const strategies = Array.isArray(strategy) ? strategy : [strategy]
+  const ignoreRules = [ignore].flat()
+  const strategies = [strategy].flat()
 
   const handled = new Set<string>()
   const injected: Array<{ url: string; el: HTMLElement }> = []
@@ -106,7 +118,13 @@ export function preload(options: PreloadOptions = {}): PreloadPlugin {
         const script = document.createElement('script')
         script.type = 'speculationrules'
         script.textContent = JSON.stringify({
-          prerender: [{ source: 'list', urls: [url] }],
+          prerender: [
+            {
+              source: 'list',
+              urls: [url],
+              ...(eagerness ? { eagerness } : {}),
+            },
+          ],
         })
         document.head.appendChild(script)
         injected.push({ url, el: script })
@@ -117,7 +135,10 @@ export function preload(options: PreloadOptions = {}): PreloadPlugin {
         fetch(url, { priority: 'low' } as RequestInit)
           .then((res) => res.text())
           .then((html) => {
-            docCache.set(url, new DOMParser().parseFromString(html, 'text/html'))
+            docCache.set(
+              url,
+              new DOMParser().parseFromString(html, 'text/html'),
+            )
           })
           .catch(() => {})
         break
@@ -177,13 +198,35 @@ export function preload(options: PreloadOptions = {}): PreloadPlugin {
         })
       }
     },
-    { threshold },
+    { threshold: 0 },
   )
 
   return {
     attach(element) {
-      if (element instanceof HTMLFormElement && element.method.toLowerCase() !== 'get') return
-      if (!linkURL(element)) return
+      if (
+        element instanceof HTMLFormElement &&
+        element.method.toLowerCase() !== 'get'
+      ) {
+        return
+      }
+
+      const url = linkURL(element)
+      if (!url) return
+
+      if (eagerness) {
+        // prerender: Speculation Rules API manages timing based on eagerness value
+        if (strategies.includes('prerender') && supportsSpeculationRules()) {
+          applyStrategy(url, 'prerender')
+        }
+        // fetch: moderate/conservative have no fetch()-equivalent, so all eagerness
+        // values collapse to "immediately" — fire at attach time, skip the observer
+        if (strategies.includes('fetch')) {
+          applyStrategy(url, 'fetch')
+        }
+        // prefetch via <link> has no eagerness concept, still needs observer
+        if (!strategies.includes('prefetch')) return
+      }
+
       observer.observe(element)
     },
     request(context, next) {

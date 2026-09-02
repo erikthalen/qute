@@ -8,7 +8,7 @@
     "build": "docgen build"
   },
   "dependencies": {
-    "@erikt/docgen": "0.0.9"
+    "@erikt/docgen": "0.0.12"
   },
   "devDependencies": {
     "@types/node": "catalog:"

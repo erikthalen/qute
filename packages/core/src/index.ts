@@ -24,6 +24,7 @@ export type {
   PreloadPlugin,
   PreloadOptions,
   PreloadStrategy,
+  PreloadEagerness,
   IgnoreRule,
   LoadingTarget,
 } from './plugins/index.js'
